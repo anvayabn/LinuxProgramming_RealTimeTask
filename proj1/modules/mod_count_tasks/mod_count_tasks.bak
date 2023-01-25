@@ -1,0 +1,72 @@
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/mm.h>
+#include <linux/mman.h>
+#include <linux/syscalls.h>
+#include <linux/unistd.h>
+#include "../../kernel/count_tasks.c"
+
+#define __NR_count_rt_tasks 449
+unsigned long *syscall_table = NULL;
+// corresponds to the syscall that will be replaced
+asmlinkage long (*original)(int * result);
+unsigned long original_cr0;
+
+#define SYSCALL_TO_REPLACE __NR_count_rt_tasks
+
+asmlinkage int new_syscall(int* result)
+{
+  printk("I'm the syscall which overwrittes the previous !\n");
+  return 0;
+}
+
+static unsigned long **find_syscall_table(void)
+{
+  unsigned long int offset = PAGE_OFFSET;
+  unsigned long **sct;
+
+  while (offset < ULLONG_MAX) {
+    sct = (unsigned long **)offset;
+
+    if (sct[__NR_count_rt_tasks] == (unsigned long *) sys_count_rt_tasks)
+      return sct;
+
+    offset += sizeof(void *);
+  }
+
+  return NULL;
+}
+
+static int __init overwrite_init(void){
+  syscall_table = (unsigned long *) find_syscall_table();
+  if (syscall_table == NULL) {
+    printk(KERN_ERR"net_malloc: Syscall table is not found\n");
+    return -1;
+  }
+  // wrapper for asm part
+  original_cr0 = read_cr0();
+  write_cr0(original_cr0 & ~0x00010000);
+  original = (void *)syscall_table[SYSCALL_TO_REPLACE];
+
+  // we now overwrite the syscall
+  syscall_table[SYSCALL_TO_REPLACE] = (unsigned long *)new_syscall;
+  write_cr0(original_cr0);
+  printk("net_malloc: Patched! syscall number : %d\n", SYSCALL_TO_REPLACE);
+  return 0;
+}
+
+static void __exit overwrite_exit(void){
+  // reset overwritten syscall
+  if (syscall_table != NULL) {
+    original_cr0 = read_cr0();
+    write_cr0(original_cr0 & ~0x00010000);
+
+    syscall_table[SYSCALL_TO_REPLACE] = (unsigned long *)original;
+
+    write_cr0(original_cr0);
+  }
+}
+
+module_init(overwrite_init);
+module_exit(overwrite_exit);
+MODULE_LICENSE("GPL");
