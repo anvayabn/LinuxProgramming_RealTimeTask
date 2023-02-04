@@ -31,7 +31,6 @@ static asmlinkage long my_count_rt_tasks(int* result)
     struct task_struct *task;
     for_each_process(task)
     {
-	    printk("task priority %d\n", task->rt_priority);
         if (task->rt_priority > 50)
             count++;
     }
@@ -49,14 +48,14 @@ static int __init hello_init(void)
     if(err)
         return err;
 
-    printk(KERN_INFO "rootkit: loaded\n");
+    printk(KERN_INFO "my_count_rt_tasks: loaded\n");
     return 0; 
 }
 
 static void __exit hello_exit(void)
 {
     fh_remove_hooks(hooks, ARRAY_SIZE(hooks));
-    printk(KERN_INFO "rootkit: unloaded\n");
+    printk(KERN_INFO "my_count_rt_tasks: unloaded\n");
 }
 
 module_init(hello_init);
