@@ -1,4 +1,4 @@
-obj-m += hello.o
+obj-m += rtesdev.o
 
 all:
 	make -C ../../.. M=$(PWD)
