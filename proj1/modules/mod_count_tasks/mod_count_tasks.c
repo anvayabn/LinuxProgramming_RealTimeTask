@@ -12,7 +12,7 @@ char *sym_name = "sys_call_table";
 int index = 0;
 unsigned long original_cr0;
 unsigned long *sys_call_table;
-typedef asmlinkage long (*custom_count_rt_tasks) (int* result);
+typedef  asmlinkage long (*custom_count_rt_tasks) (struct pt_regs *regs);
 
 custom_count_rt_tasks old_count_rt_tasks;
 
@@ -22,19 +22,26 @@ custom_count_rt_tasks old_count_rt_tasks;
 
 #ifdef PTREGS_SYSCALL_STUBS
 
-static asmlinkage long my_count_rt_tasks(int* result)
+static asmlinkage long my_count_rt_tasks(struct pt_regs *regs )
+//SYSCALL_DEFINE1(my_count_rt_tasks, int*, result)
 {
+    int * result = (void*)regs->di;
     printk("I'm the syscall which overwrittes the previous !\n");
        if (!result)
         return -EINVAL;
+    printk("result initial value: %d\n", *result);
     int count = 0;
     struct task_struct *task;
     for_each_process(task)
     {
-        if (task->rt_priority > 50)
+        //printk("task_id: %d, task_pr: %d", *count, task->rt_priority);
+        if (task->rt_priority > 50){
+            printk("task_id: %d, task_pr: %d", count, task->rt_priority);
             count++;
+        }
     }
     *result = count;
+    printk("number of real-time tasks: %d", count);
     return 0; 
 }
 #endif
