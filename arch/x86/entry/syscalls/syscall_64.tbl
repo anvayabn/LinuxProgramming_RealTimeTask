@@ -370,7 +370,9 @@
 446	common	landlock_restrict_self	sys_landlock_restrict_self
 447	common	memfd_secret		sys_memfd_secret
 448	common	process_mrelease	sys_process_mrelease
-449 common  count_rt_tasks          sys_count_rt_tasks
+449 common  count_rt_tasks  sys_count_rt_tasks
+450 common  set_rtmon       sys_set_rtmon
+451 common  cancel_rtmon    sys_cancel_rtmon
 #
 # Due to a historical design error, certain syscalls are numbered differently
 # in x32 as compared to native x86_64.  These syscalls have numbers 512-547.
