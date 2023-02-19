@@ -1487,7 +1487,8 @@ struct task_struct {
 	 */
 	struct callback_head		l1d_flush_kill;
 #endif
-
+	ktime_t 					C;
+	ktime_t						T;
 	/*
 	 * New fields for task_struct should be added above here, so that
 	 * they are included in the randomized portion of task_struct.

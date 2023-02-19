@@ -1384,4 +1384,5 @@ int __sys_setsockopt(int fd, int level, int optname, char __user *optval,
 asmlinkage long sys_count_rt_tasks(int* result);
 asmlinkage long sys_set_rtmon(pid_t pid, unsigned int C_ms, unsigned int T_ms );
 asmlinkage long sys_cancel_rtmon(pid_t pid);
+asmlinkage long sys_print_rtmon(pid_t pid);
 #endif

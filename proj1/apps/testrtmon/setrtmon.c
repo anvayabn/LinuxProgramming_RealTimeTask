@@ -4,7 +4,7 @@
 
 int main(int argc, char *argv[]){
     int pid, c_ms, t_ms;
-    long ret, ret2;
+    long ret, ret2, ret1;
 
     if (argc != 4) {
         fprintf(stderr, "Usage: %s <pid> <C_ms> <T_ms>\n", argv[0]);
@@ -21,17 +21,6 @@ int main(int argc, char *argv[]){
         printf("set_rtmon successful.\n");
     } else {
         printf("Error: %ld\n", ret);
-        exit(EXIT_FAILURE);
-    }
-
-    // Call the cancel_rtmon system call with the provided pid
-    ret2 = syscall(451, pid);
-    if (ret2 == 1) {
-        printf("cancel_rtmon successful.\n");
-    } else if (ret2 == 0) {
-        printf("Error: timer does not exist.\n");
-    } else {
-        printf("Error: %ld\n", ret2);
         exit(EXIT_FAILURE);
     }
 
