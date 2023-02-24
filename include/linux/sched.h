@@ -1489,6 +1489,10 @@ struct task_struct {
 #endif
 	ktime_t 					C;
 	ktime_t						T;
+	ktime_t 					sit;
+	ktime_t 					sot;
+	ktime_t 					cmt;
+	struct hrtimer				hrtimer;
 	/*
 	 * New fields for task_struct should be added above here, so that
 	 * they are included in the randomized portion of task_struct.
