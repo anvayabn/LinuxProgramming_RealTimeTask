@@ -4,8 +4,6 @@
 #include <linux/hrtimer.h>
 #include <linux/math.h>
 
-#define TIMEOUT_NSEC   ( 1000000000L )      //1 second in nano seconds
-#define TIMEOUT_SEC    ( 4 )                //4 seconds
 
 static ktime_t ET;
 static ktime_t Period;
@@ -13,30 +11,42 @@ static ktime_t Period;
 // #ifndef NR_PID_MAX
 // #define NR_PID_MAX 32768
 // #endif
+spinlock_t my_lock;
+
 static enum hrtimer_restart my_hrtimer_callback(struct hrtimer *timer){
 
-    printk("Timer Callback function Called\n");
-    hrtimer_forward_now(timer,ktime_set(TIMEOUT_SEC, TIMEOUT_NSEC));
+    // printk("Timer Callback function Called\n");
+    struct task_struct *t = container_of(timer,struct task_struct, hrtimer);
+    if (spin_trylock(&my_lock)){
+        if (t != NULL){
+            // printk("task exists\n");
+            t->cmt = ktime_set(0,0);
+            hrtimer_forward_now(timer,t->T);
+            spin_unlock(&my_lock);
+            return HRTIMER_RESTART;
+        }else if(t == NULL || t->exit_state == EXIT_DEAD || t->exit_state == EXIT_ZOMBIE || t->__state == __TASK_STOPPED || t->__state == __TASK_TRACED){
+            printk("The task has exited and hr timer will stopped\n");
+            t->cmt = ktime_set(0,0); 
+            int x = hrtimer_cancel(&t->hrtimer);
+            if(x == 1){
+                printk("Timer was cancelled\n");
+                spin_unlock(&my_lock);
+                return HRTIMER_NORESTART;
+            }else if(x == 0){
+                printk("Timer Tried to cancel\n");
+                spin_unlock(&my_lock);
+                return HRTIMER_NORESTART;
+            }else if (x<0){
+                printk("Timer Cancell Error\n");
+                spin_unlock(&my_lock);
+                return HRTIMER_NORESTART;
+            }             
+        }       
+        
+    }
     return HRTIMER_RESTART;
-    // struct task_struct *t ;
-    // t = container_of(timer, struct task_struct, hrtimer);
-    // if(t){
-    //     if (pid_alive(t->pid)){
 
-    //         printk("Usage is set to zero\n");
-    //         t->cmt = 0 ; 
-            
-    //     }else {
-
-    //         printk("The task is not alive hence no use of timer \n");
-    //         return HRTIMER_NORESTART;
-            
-    //     }
-
-
-    // }
-    // hrtimer_forward_now(timer, t->T);
-    // return HRTIMER_RESTART;
+ 
 }
 
 SYSCALL_DEFINE3(set_rtmon, pid_t, pid, unsigned int, C_ms, unsigned int, T_ms)
@@ -107,26 +117,25 @@ SYSCALL_DEFINE1(cancel_rtmon, pid_t, pid)
     for_each_process_thread(p,t){
         if(t->pid == pid){
             if(t->C !=0 && t->T !=0){
-                t->C = 0;
-                t->T = 0;
-                printk("Pids are set to zero\n");           
+                t->C = ktime_set(0,0);
+                t->T = ktime_set(0,0);
+                t->cmt = ktime_set(0,0);
+                int x = hrtimer_cancel(&t->hrtimer);
+                printk("Pids are set to zero\n"); 
+                if (x == 0 || x == 1){
+                    printk("timer is cancelled\n");
+                    return 0;
+                }else {
+                    printk("Failed to cancel timer\n");
+                    return -1;
+                }
+                          
             }else{
                 printk("The timing parameters are already zero\n");
                 return -1;
             }
 
         }
-        struct task_struct *t = find_task_by_pid_ns(pid,&init_pid_ns);
-        if(t){
-            if(pid_alive(t->pid)){
-                printk("Task True , setting usage to zero and cancelling the hrtimer");
-                t->cmt = 0 ; 
-                return 0;
-
-            }
-        }
-
-
         }
         printk("The PID doesnot Exist\n");
         return -1;
@@ -141,8 +150,7 @@ SYSCALL_DEFINE1(print_rtmon, pid_t, pid)
 
                 ktime_t C_ms = (t->C/1000000);
                 ktime_t T_ms = (t->T/1000000);
-                t->cmt = ((t->sot) - (t->sit))/1000000;
-                printk("print_rtmon: PID %d, C %lld ms, T %lld ms\n, usage %lld ms", t->pid, C_ms, T_ms, t->cmt);
+                printk("print_rtmon: PID %d, C %lld ms, T %lld ms\n, usage %lld ms", t->pid, C_ms, T_ms, (t->cmt/1000000));
                 return 0;
 
             }
@@ -154,8 +162,7 @@ SYSCALL_DEFINE1(print_rtmon, pid_t, pid)
         for_each_process_thread(p,t){
             ktime_t C_ms = (t->C/1000000);
             ktime_t T_ms = (t->T/1000000);
-            t->cmt = ((t->sot) - (t->sit))/1000000;
-            printk("print_rtmon: PID %d, C %lld ms, T %lld ms\n, usage %lld ms", t->pid, C_ms, T_ms, t->cmt);            
+            printk("print_rtmon: PID %d, C %lld ms, T %lld ms\n, usage %lld ms", t->pid, C_ms, T_ms, (t->cmt/1000000));            
             printk("print_rtmon: PID %d, C %lld ms, T %lld ms\n", t->pid, C_ms, T_ms);
         }
     }else{
@@ -164,4 +171,24 @@ SYSCALL_DEFINE1(print_rtmon, pid_t, pid)
     }
 
     return 0;
+}
+SYSCALL_DEFINE0(wait_until_next_period)
+{
+    struct task_struct *t = current;
+    if(t->C !=0 || t->T != 0){
+        //suspend the task 
+        t->__state = TASK_INTERRUPTIBLE;
+        set_tsk_need_resched(t);
+        //wait for the callback function to execute 
+        ktime rem = hrtimer_get_remaining(&t->hrtimer);
+        while(rem != 0){
+            rem = hrtimer_get_remaining(&t->hrtimer);
+        }
+        // wakeup the process
+        wake_up_process(t);
+        retuurn 0;
+    }
+    return -1;
+
+
 }
