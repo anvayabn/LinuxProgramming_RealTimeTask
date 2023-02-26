@@ -1385,5 +1385,5 @@ asmlinkage long sys_count_rt_tasks(int* result);
 asmlinkage long sys_set_rtmon(pid_t pid, unsigned int C_ms, unsigned int T_ms );
 asmlinkage long sys_cancel_rtmon(pid_t pid);
 asmlinkage long sys_print_rtmon(pid_t pid);
-asmlinkage long wait_until_next_period(void);
+asmlinkage long sys_wait_until_next_period(void);
 #endif

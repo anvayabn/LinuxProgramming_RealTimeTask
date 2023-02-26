@@ -1,1 +1,1 @@
-obj-y += count_tasks.o rtmon.o
+obj-y += count_tasks.o
