@@ -6286,6 +6286,7 @@ static void __sched notrace __schedule(unsigned int sched_mode)
 		/* Also unlocks the rq: */
 		prev->sot = ktime_get_ns();
 		next->sit = ktime_get_ns();
+		next->sot = ktime_get_ns();
 		prev->cmt += ((prev->sot) - (prev->sit));
 		rq = context_switch(rq, prev, next, &rf);
 	} else {

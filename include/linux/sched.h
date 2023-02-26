@@ -1493,6 +1493,7 @@ struct task_struct {
 	ktime_t 					sot;
 	ktime_t 					cmt;
 	struct hrtimer				hrtimer;
+	struct hrtimer				budget_hrtimer;
 	/*
 	 * New fields for task_struct should be added above here, so that
 	 * they are included in the randomized portion of task_struct.
