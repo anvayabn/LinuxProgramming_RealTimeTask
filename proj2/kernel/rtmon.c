@@ -129,7 +129,8 @@ SYSCALL_DEFINE1(print_rtmon, pid_t, pid)
 
                 ktime_t C_ms = (t->C/1000000);
                 ktime_t T_ms = (t->T/1000000);
-                printk("print_rtmon: PID %d, C %lld ms, T %lld ms, usage %lld ms\n", t->pid, C_ms, T_ms, (t->cmt/1000000));
+                ktime_t cmt = t->cmt;
+                printk("print_rtmon: PID %d, C %lld ms, T %lld ms, usage %lld ms\n", t->pid, C_ms, T_ms, (cmt/1000000));
                 return 0;
 
             }
@@ -157,9 +158,9 @@ printk("syscall 453!\n");
     
     struct task_struct *t = current;
     if(t != NULL){
-    printk("Find tcb and Hit it! pid: %d, C: %lld, T:%lld\n", t->pid, t->C/1000000, t->T/1000000);
+    // printk("Find tcb and Hit it! pid: %d, C: %lld, T:%lld\n", t->pid, t->C/1000000, t->T/1000000);
     if(t->C !=0 && t->T != 0){
-        printk("Find tcb and Hit it! pid: %d, C: %lld, T:%lld\n", t->pid, t->C/1000000, t->T/1000000);
+        // printk("Find tcb and Hit it! pid: %d, C: %lld, T:%lld\n", t->pid, t->C/1000000, t->T/1000000);
         //suspend the task 
         t->__state = TASK_INTERRUPTIBLE;
         schedule();
