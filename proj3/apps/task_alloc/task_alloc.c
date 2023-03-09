@@ -19,17 +19,18 @@ typedef struct {
     Task *tasks;
     unsigned int num_tasks;
 } CPU;
-int compare_cpu(const void* a, const void* b) {
-    const CPU* cpu_a = (const CPU*) a;
-    const CPU* cpu_b = (const CPU*) b;
-    if (cpu_a->capacity < cpu_b->capacity) {
-        return -1;
-    } else if (cpu_a->capacity > cpu_b->capacity) {
-        return 1;
-    } else {
-        return 0;
-    }
-}
+
+// int compare_cpu(const void* a, const void* b) {
+//     const CPU* cpu_a = (const CPU*) a;
+//     const CPU* cpu_b = (const CPU*) b;
+//     if (cpu_a->capacity < cpu_b->capacity) {
+//         return -1;
+//     } else if (cpu_a->capacity > cpu_b->capacity) {
+//         return 1;
+//     } else {
+//         return 0;
+//     }
+// }
 
 /*The cpus here will be initialized to  */
 // Define bin-packing heuristics: BFD, WFD, FFD
@@ -44,7 +45,7 @@ int BFD(CPU *cpus, Task task, unsigned int num_cpus) {
         // printf("the value of i %u\n", num_cpus);
         // printf("The current capacity of the cpu is %f\n", cpus[i].capacity);
         if (cpus[i].capacity >= task_utilization){
-            if (available_cpu == num_cpus || cpus[i].capacity <= cpus[available_cpu].capacity ){
+            if (available_cpu == num_cpus || cpus[i].capacity < cpus[available_cpu].capacity ){
                 available_cpu = i ; 
             }
         }
@@ -72,7 +73,7 @@ int WFD(CPU *cpus, Task task, unsigned int num_cpus) {
         // printf("the value of i %u\n", num_cpus);
         // printf("The current capacity of the cpu is %f\n", cpus[i].capacity);
         if (cpus[i].capacity >= task_utilization){
-            if (available_cpu == num_cpus || cpus[i].capacity >= cpus[available_cpu].capacity ){
+            if (available_cpu == num_cpus || cpus[i].capacity > cpus[available_cpu].capacity ){
                 available_cpu = i ; 
             }
         }
@@ -94,7 +95,7 @@ int FFD(CPU *cpus, Task task, unsigned int num_cpus) {
     double task_utilization = task.C/task.T; 
     double cpu_utilization = task.C/task.T;
 
-    qsort(cpus, num_cpus, sizeof(CPU), compare_cpu);
+    // qsort(cpus, num_cpus, sizeof(CPU), compare_cpu);
     // Start allocation from CPU0
     for (i=0; i<num_cpus; i++){
         // printf("the value of i %u\n", num_cpus);
