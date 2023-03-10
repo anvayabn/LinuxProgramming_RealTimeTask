@@ -95,13 +95,13 @@ static int __init segment_info_init(void)
         printk(KERN_ERR "Unable to register %s misc device\n", DEVICE_NAME);
         return ret;
     }
-    printk(KERN_INFO "rtesdev: registered misc device %s\n", DEVICE_NAME);
+    printk(KERN_INFO "segment_info: registered misc device %s\n", DEVICE_NAME);
     return 0;
 }
 static void __exit segment_info_exit(void)
 {
     misc_deregister(&segment_info_miscdev);
-    printk(KERN_INFO "rtesdev: unregistered misc device %s\n", DEVICE_NAME);
+    printk(KERN_INFO "segment_info: unregistered misc device %s\n", DEVICE_NAME);
 }
 
 module_init(segment_info_init);
