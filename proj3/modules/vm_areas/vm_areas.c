@@ -28,7 +28,7 @@ static ssize_t vm_areas_write(struct file *file, const char __user *buf, size_t 
     int val; 
     struct task_struct *task;
     struct mm_struct *mm;
-    struct vm_areas_struct *vma;
+    struct vm_area_struct *vma;
     char *kbuf;
 
     if (count > 20) {
@@ -63,8 +63,6 @@ static ssize_t vm_areas_write(struct file *file, const char __user *buf, size_t 
         kfree(kbuf);
         return -1 ; 
     }
-    printk("[Memory segment address of process %d]\n", pid);
-
     mm = task->mm;
     if (!mm) {
         printk(KERN_ALERT "vm_areas: error: Cannot retrieve memory info for PID %d.\n", pid);
@@ -72,14 +70,14 @@ static ssize_t vm_areas_write(struct file *file, const char __user *buf, size_t 
         return -1;
     }    
 	printk(KERN_INFO "[Memory-mapped areas of process %ld]\n", pid);
-    vma = mm.mmap;
+    vma = mm->mmap;
     if (!vma){
         printk(KERN_ALERT "vm_areas: error: Cannot retrive vma for PID %d.\n", pid);
         kfree(kbuf);
         return -1;
     }
 
-	for (vma; vma = vma->vm_next) {
+	for (; vma; vma = vma->vm_next) {
 		printk(KERN_INFO "%08lx - %08lx: %lu bytes%s\n",
 			   vma->vm_start, vma->vm_end,
 			   vma->vm_end - vma->vm_start,
@@ -87,8 +85,6 @@ static ssize_t vm_areas_write(struct file *file, const char __user *buf, size_t 
 	}
     kfree(kbuf);
 	return count;    
-
-
 }
 static const struct file_operations vm_areas_fops = {
     .owner = THIS_MODULE,
