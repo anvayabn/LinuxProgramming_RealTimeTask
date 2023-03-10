@@ -7,16 +7,7 @@
 
 #define DEVICE_NAME "segment_info"
 
-
-static int segment_info_release(struct inode *inode, struct file *file)
-{
-    return 0;
-}
-static long int segment_info_read(struct file *file, char __user *buf, long unsigned int len, long long int *offset)
-{   
-    return 0;
-
-}   
+  
 static int segment_info_open(struct inode *inode, struct file *file)
 {
     // This function is called when the device file is opened
@@ -90,8 +81,6 @@ static const struct file_operations segment_info_fops = {
     .owner = THIS_MODULE,
     .open = segment_info_open,
     .write = segment_info_write,
-    .release = segment_info_release,
-    .read = segment_info_read,
 };
 
 static struct miscdevice segment_info_miscdev = {
@@ -103,16 +92,16 @@ static int __init segment_info_init(void)
 {
     int ret = misc_register(&segment_info_miscdev);
     if (ret) {
-        printk(KERN_ALERT "segment_info: Failed to register misc device (error code %d).\n", ret);
+        printk(KERN_ERR "Unable to register %s misc device\n", DEVICE_NAME);
+        return ret;
     }
-    printk("Module is loaded");
-    return ret;
+    printk(KERN_INFO "rtesdev: registered misc device %s\n", DEVICE_NAME);
+    return 0;
 }
 static void __exit segment_info_exit(void)
 {
     misc_deregister(&segment_info_miscdev);
-
-    printk("Module is unloaded \n");
+    printk(KERN_INFO "rtesdev: unregistered misc device %s\n", DEVICE_NAME);
 }
 
 module_init(segment_info_init);
